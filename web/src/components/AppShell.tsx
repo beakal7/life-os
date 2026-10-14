@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useTransition } from "react";
 import { useLifeOS } from "@/hooks/useLifeOS";
 import { Toast, useToast } from "@/components/ui/Toast";
 import { TAB_CONFIG, type TabId } from "@/types";
+import { signOut } from "@/lib/auth";
 
 import { TodayTab }   from "@/components/tabs/TodayTab";
 import { FitnessTab } from "@/components/tabs/FitnessTab";
@@ -16,6 +17,7 @@ export function AppShell() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
   const { toast, showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSigningOut, startSignOut] = useTransition();
 
   const {
     data,
@@ -142,6 +144,23 @@ export function AppShell() {
               style={{ display: "none" }}
             />
           </label>
+          <button
+            onClick={() => startSignOut(() => signOut())}
+            disabled={isSigningOut}
+            title="Sign out"
+            style={{
+              fontSize: 11,
+              background: "#251a31",
+              border: "1px solid #453352",
+              borderRadius: 9,
+              padding: "8px 10px",
+              color: "#cfc0db",
+              opacity: isSigningOut ? 0.6 : 1,
+              cursor: isSigningOut ? "not-allowed" : "pointer",
+            }}
+          >
+            {isSigningOut ? "…" : "Sign out"}
+          </button>
         </div>
       </header>
 

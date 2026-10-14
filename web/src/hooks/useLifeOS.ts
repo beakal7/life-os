@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useCallback, useEffect } from "react";
-import type { LifeOSData, Task, Habit, Goal, Stock, QuickLink } from "@/types";
+import type { LifeOSData, QuickLink } from "@/types";
 import {
   loadData,
   saveData,
