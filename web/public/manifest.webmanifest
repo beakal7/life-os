@@ -1,0 +1,10 @@
+{
+  "name": "Life OS Command Center",
+  "short_name": "Life OS",
+  "description": "Your personal command center — tasks, habits, fitness, faith, finance, career and goals.",
+  "display": "standalone",
+  "start_url": "/",
+  "background_color": "#100b18",
+  "theme_color": "#100b18",
+  "icons": []
+}

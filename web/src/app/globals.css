@@ -1,0 +1,292 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Life OS — Design tokens
+   All colours match the original index.html CSS variables exactly.
+   Tailwind v4 CSS-first config: custom values declared here, used as
+   bg-[var(--bg)], text-[var(--accent)], border-[var(--line)], etc.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  --color-bg:      #100b18;
+  --color-panel:   #1a1423;
+  --color-panel2:  #150f20;
+  --color-line:    #332a3e;
+  --color-text:    #f4eef9;
+  --color-muted:   #9c92a9;
+  --color-accent:  #af8bf3;
+  --color-accent2: #b997f7;
+  --color-red:     #f38199;
+}
+
+/* ── Base reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 68% 3%,  #32112b 0, transparent 38%),
+    radial-gradient(ellipse at 3%  10%, #2a233b 0, transparent 44%),
+    #100b18;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #f4eef9;
+  min-height: 100vh;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  color: inherit;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #3d2f4d; border-radius: 99px; }
+
+/* ── Typography helpers ─────────────────────────────────────────────────────── */
+h1 {
+  font-size: clamp(25px, 2.4vw, 34px);
+  letter-spacing: -1.1px;
+  margin: 2px 0;
+}
+h1::first-letter { color: #fff; }
+
+h2 {
+  font-size: 16px;
+  letter-spacing: -.4px;
+  margin: 0 0 2px;
+  font-weight: 720;
+}
+
+p { margin: 0; color: #9c92a9; }
+
+/* ── Card ───────────────────────────────────────────────────────────────────── */
+.card {
+  background: linear-gradient(145deg, #1c1626, #18121f);
+  border: 1px solid #382b41;
+  border-radius: 23px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.13);
+  padding: 19px;
+}
+
+/* ── Stat block ─────────────────────────────────────────────────────────────── */
+.stat {
+  background: linear-gradient(145deg, #1c1626, #18121f);
+  border: 1px solid #382b41;
+  border-radius: 23px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.13);
+  padding: 18px;
+}
+
+/* ── Input ──────────────────────────────────────────────────────────────────── */
+.life-input {
+  width: 100%;
+  border: 1px solid #493657;
+  background: #130e1a;
+  border-radius: 10px;
+  padding: 10px;
+  color: #f8efff;
+  outline: none;
+}
+.life-input:focus { border-color: #ac86e1; outline: 1px solid #ac86e1; }
+
+/* ── Action buttons ─────────────────────────────────────────────────────────── */
+.btn-action {
+  background: #7f59bb;
+  border: 1px solid #926ccc;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-weight: 650;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #493552;
+  color: #bbabca;
+  border-radius: 10px;
+  padding: 10px 13px;
+}
+.btn-subtle {
+  background: none;
+  border: 0;
+  color: #c7aaf3;
+  text-align: left;
+  font-size: 12px;
+  padding: 6px 0;
+}
+.btn-icon {
+  border: 1px solid #332a3e;
+  background: #221a2a;
+  border-radius: 8px;
+  padding: 2px 9px;
+  font-size: 20px;
+}
+
+/* ── Meter / progress bar ───────────────────────────────────────────────────── */
+.meter {
+  height: 8px;
+  background: #31243a;
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+.meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #784fb4, #c49af1);
+}
+
+/* ── Checkbox accent ────────────────────────────────────────────────────────── */
+input[type="checkbox"] {
+  accent-color: #b689ee;
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Tag pill ───────────────────────────────────────────────────────────────── */
+.tag {
+  background: #342344;
+  border-radius: 8px;
+  color: #c7a8f2;
+  font-size: 11px;
+  padding: 4px 7px;
+}
+
+/* ── Toast ──────────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  border-radius: 12px;
+  background: #5b367d;
+  color: white;
+  padding: 12px 17px;
+  z-index: 50;
+  pointer-events: none;
+  animation: toast-in 0.2s ease;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Vision board ───────────────────────────────────────────────────────────── */
+.vision-card {
+  background:
+    radial-gradient(ellipse at 60% 80%, #8165aa 0, transparent 55%),
+    linear-gradient(155deg, #251e3b, #151923 70%);
+  border: 1px solid #483956;
+  border-radius: 16px;
+  height: 155px;
+  position: relative;
+  overflow: hidden;
+  padding: 19px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 9px;
+}
+.vision-card::after {
+  content: '';
+  position: absolute;
+  right: -25px; top: 18px;
+  width: 140px; height: 140px;
+  border: 1px solid rgba(168,136,239,.45);
+  border-radius: 50%;
+  box-shadow: 0 0 0 20px rgba(142,115,188,.09), 0 0 0 46px rgba(144,116,173,.09);
+}
+
+/* ── Inspiration orb ────────────────────────────────────────────────────────── */
+.inspiration-orb {
+  height: 54px; width: 54px;
+  margin: 5px auto;
+  border: 3px solid #654c99;
+  border-radius: 50%;
+  box-shadow: 0 0 22px rgba(101,74,184,.4), inset 0 0 20px rgba(139,73,199,.36);
+  display: grid;
+  place-items: center;
+  color: #ceabff;
+  font-size: 23px;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────────── */
+.empty-state {
+  border: 1px dashed #4a3855;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #a99ab5;
+}
+
+/* ── Habit tile ─────────────────────────────────────────────────────────────── */
+.habit-tile {
+  text-align: center;
+  padding: 11px 4px;
+  background: #140f1c;
+  border: 1px solid #292031;
+  border-radius: 12px;
+  min-height: 81px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.habit-tile.checked {
+  border-color: #9773cc;
+  background: #2d1e3e;
+}
+
+/* ── Calendar ───────────────────────────────────────────────────────────────── */
+.cal-day {
+  min-height: 24px;
+  padding: 2px 0;
+  font-size: 11px;
+  background: #15101e;
+  border: 1px solid #33273d;
+  border-radius: 8px;
+  position: relative;
+  text-align: center;
+}
+.cal-day.today { background: #604575; border-color: #b28bff; }
+.cal-day.blank { background: none; border: none; }
+.cal-dot {
+  display: block;
+  width: 4px; height: 4px;
+  background: #ad91ff;
+  border-radius: 99px;
+  position: absolute;
+  bottom: 1px;
+  left: calc(50% - 2px);
+}
+
+/* ── Focus timer ─────────────────────────────────────────────────────────────── */
+.timer-display {
+  font-size: 38px;
+  letter-spacing: 1px;
+  font-weight: 780;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Table ──────────────────────────────────────────────────────────────────── */
+.life-table { width: 100%; border-collapse: collapse; min-width: 520px; }
+.life-table th,
+.life-table td { text-align: left; padding: 12px 8px; border-bottom: 1px solid #332a3e; }
+.life-table th { font-size: 12px; color: #9c92a9; }
+.life-table td { font-variant-numeric: tabular-nums; }
+.text-positive { color: #8ee0bf; }
+.text-negative { color: #f38199; }

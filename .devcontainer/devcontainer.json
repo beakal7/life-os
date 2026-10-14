@@ -1,0 +1,19 @@
+{
+  "name": "Life OS",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {},
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Life OS dev server", "onAutoForward": "openPreview" }
+  },
+  "postCreateCommand": "cd web && npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  }
+}
