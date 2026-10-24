@@ -103,6 +103,7 @@ export interface JournalEntry {
 }
 
 export interface QuickLink {
+  id?: UID;
   name: string;
   url: string;
 }

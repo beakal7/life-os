@@ -1,19 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Life OS — Data layer
 //
-// This module is the ONLY place that touches localStorage.
-// Phase 2: swap `loadData` / `saveData` for Supabase calls without touching
-// any component. All other modules import from here, never from localStorage
-// directly.
-//
-// API boundary for Kiro Crew agents:
-//   GET  /api/data        → returns LifeOSData as JSON (Phase 2)
-//   POST /api/data        → replaces LifeOSData (Phase 2)
+// Defaults, backup export/parse and helpers. Cloud persistence lives in
+// lib/db.ts (Supabase). localStorage is only read for the one-time
+// "Import local data" migration (key `lifeos-v1`).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { LifeOSData, QuickLink } from "@/types";
 
-const STORAGE_KEY = "lifeos-v1";
+export const STORAGE_KEY = "lifeos-v1";
 
 // ── Default quick-links (matches the original index.html defaults) ─────────────
 const DEFAULT_LINKS: QuickLink[] = [
@@ -51,23 +46,17 @@ export function getDefaults(): LifeOSData {
 
 // ── Read / write ───────────────────────────────────────────────────────────────
 
-/** Load data from localStorage, merging with defaults for any missing keys. */
-export function loadData(): LifeOSData {
-  if (typeof window === "undefined") return getDefaults();
+/** Legacy browser data (pre-Supabase), or null if none. */
+export function loadLocalData(): LifeOSData | null {
+  if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return getDefaults();
+    if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<LifeOSData>;
     return { ...getDefaults(), ...parsed };
   } catch {
-    return getDefaults();
+    return null;
   }
-}
-
-/** Persist data to localStorage. */
-export function saveData(data: LifeOSData): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
 // ── Backup / restore (export / import) ────────────────────────────────────────
@@ -125,9 +114,9 @@ export function todayKey(): string {
   return new Date().toLocaleDateString("en-CA");
 }
 
-/** Short random UID (matches original). */
+/** UUID (Supabase primary keys are uuid). */
 export function uid(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 /** Format a number as USD currency. */
