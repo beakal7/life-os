@@ -5,6 +5,9 @@ import type { Session } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase/client";
 import { loadLocalData, STORAGE_KEY } from "@/lib/storage";
 import { useLifeOS } from "@/hooks/useLifeOS";
+import { useCyber } from "@/hooks/useCyber";
+import { CyberTab } from "@/components/tabs/CyberTab";
+import { CoachTab } from "@/components/tabs/CoachTab";
 import { Toast, useToast } from "@/components/ui/Toast";
 import { TAB_CONFIG, type TabId } from "@/types";
 
@@ -32,6 +35,7 @@ export function AppShell({ session }: { session: Session }) {
     addLink, removeLink,
     doExport, doImport,
   } = useLifeOS(showToast);
+  const { cyber, setSkillStatus, addLog, removeLog, setSettings } = useCyber(showToast);
 
   // ── One-time import of pre-Supabase browser data ──────────────────────────
   const [hasLocal, setHasLocal] = useState(false);
@@ -293,6 +297,26 @@ export function AppShell({ session }: { session: Session }) {
             onAddHabit={addHabit}
             onToggleHabit={toggleHabit}
             onRemoveHabit={removeHabit}
+          />
+        )}
+
+        {activeTab === "cyber" && (
+          <CyberTab
+            cyber={cyber}
+            onSetStatus={setSkillStatus}
+            onAddLog={addLog}
+            onRemoveLog={removeLog}
+            onSetTarget={(h) => setSettings({ weeklyTargetHours: h })}
+          />
+        )}
+
+        {activeTab === "coach" && (
+          <CoachTab
+            data={data}
+            cyber={cyber}
+            onAddTask={addTask}
+            onSetWorkHours={(workStart, workEnd) => setSettings({ workStart, workEnd })}
+            onToast={showToast}
           />
         )}
 
