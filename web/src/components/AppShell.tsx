@@ -128,7 +128,7 @@ export function AppShell({ session }: { session: Session }) {
           aria-label="Main navigation"
           style={{ display: "flex", alignItems: "center", gap: 4, overflow: "auto", flex: 1, scrollbarWidth: "thin" }}
         >
-          {TAB_CONFIG.map((tab) => (
+          {TAB_CONFIG.filter((tab) => tab.id !== "finance").map((tab) => (
             <button
               key={tab.id}
               onClick={() => navigate(tab.id)}
@@ -205,10 +205,10 @@ export function AppShell({ session }: { session: Session }) {
               MAKE TODAY COUNT · YOUR COMMAND CENTER
             </div>
             <h1>
-              {activeTab === "today" ? "Your daily momentum ✦" : tabCfg.name}
+              {activeTab === "today" ? "Today" : tabCfg.name}
             </h1>
             <p>
-              {activeTab === "today" ? "A stronger body. A deeper faith. A day with intention." : tabCfg.description}
+              {activeTab === "today" ? "A few things done well." : tabCfg.description}
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>

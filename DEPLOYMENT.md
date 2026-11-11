@@ -40,3 +40,8 @@ For Google Calendar:
 The Google access token stays in memory, is never saved to Supabase/localStorage, and is cleared when the home widget unmounts or the user disconnects. Reconnect after reloading or after token expiry. Refresh explicitly after changing events in Google. Paginated, recurring, all-day, and multiday events are supported. Secondary calendars and background server synchronization are not included. The chat's Google Calendar connection cannot be reused as the website's OAuth credentials.
 
 The application does not create or edit Google events. Without Google configuration, gym/habit calendar tracking remains available and the page explains the missing setup.
+
+
+## Daily checklist
+
+Apply the `daily_checkins` migration before deploying the simplified home. This table has one owner-protected row per user and local date for prayer, push-ups, manual steps, and completed calendar event IDs. Steps have no default goal; blank means not logged. Gym/recovery completion continues to use the existing workout log, and planned recovery does not inflate gym streaks. Checklist writes are serialized so quick edits cannot arrive out of order; failed saves offer a retry.

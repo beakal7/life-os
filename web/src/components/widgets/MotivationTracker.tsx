@@ -4,10 +4,15 @@ import type { LifeOSData, Workout } from '@/types';
 import { dateKey, gymStats, type HomeSettings } from '@/lib/home';
 import { useHome } from '@/hooks/useHome';
 
-export function MotivationTracker({data,userId,onAddWorkout,onRemoveWorkout}: {
-  data:LifeOSData;userId:string;onAddWorkout:(name:string,detail:string)=>void;onRemoveWorkout:(id:string)=>void;
+export function MotivationTracker(props: {data:LifeOSData;userId:string;onAddWorkout:(name:string,detail:string)=>void;onRemoveWorkout:(id:string)=>void;}) {
+  const tracker=useHome(props.userId);
+  return <MotivationTrackerView {...props} tracker={tracker} />;
+}
+
+export function MotivationTrackerView({data,onAddWorkout,onRemoveWorkout,tracker,compact=false}: {
+  tracker:ReturnType<typeof useHome>;compact?:boolean;data:LifeOSData;onAddWorkout:(name:string,detail:string)=>void;onRemoveWorkout:(id:string)=>void;
 }) {
-  const {settings,ready,saving,error,save}=useHome(userId);
+  const {settings,ready,saving,error,save}=tracker;
   const [edit,setEdit]=useState(false);
   const [draft,setDraft]=useState<HomeSettings|null>(null);
   const now=new Date(), today=dateKey(now), day=now.getDay();
@@ -21,7 +26,7 @@ export function MotivationTracker({data,userId,onAddWorkout,onRemoveWorkout}: {
   const log=()=>{if(logged)return;onAddWorkout(`${session.training?'Gym':'Recovery'}: ${session.name}`,session.exercises);};
   const [confirmUndo,setConfirmUndo]=useState<Workout|null>(null);
   return <div className="motivation-grid">
-    <section className="momentum-banner">
+    {!compact && <section className="momentum-banner">
       <div><span className="eyebrow">SMALL WINS. STRONGER EVERY WEEK.</span>
         <h2>Build muscle. Move with power.<br/>Keep showing up.</h2>
         <p>Your next win: {!logged ? session.name.toLowerCase() : completed<6 ? `day ${current} of your church study` : 'protect your recovery and plan tomorrow'}.</p>
@@ -31,7 +36,7 @@ export function MotivationTracker({data,userId,onAddWorkout,onRemoveWorkout}: {
         <div><strong>{stats.weeks}<small> wk</small></strong><span>gym goal streak</span></div>
         <div><strong>{completed}<small> / 6</small></strong><span>study days complete</span></div>
       </div>
-    </section>
+    </section>}
     {error && <p className="tracker-error" role="alert">{error}</p>}
     <section className="card training-card">
       <div className="tracker-heading"><div><span className="eyebrow">BODY · CONSISTENCY OVER PERFECTION</span><h2>Today’s workout</h2></div>
