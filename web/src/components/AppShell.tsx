@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { getSupabase } from "@/lib/supabase/client";
+import { loadLocalData, STORAGE_KEY } from "@/lib/storage";
 import { useLifeOS } from "@/hooks/useLifeOS";
+import { useCyber } from "@/hooks/useCyber";
+import { CyberTab } from "@/components/tabs/CyberTab";
+import { CoachTab } from "@/components/tabs/CoachTab";
 import { Toast, useToast } from "@/components/ui/Toast";
 import { TAB_CONFIG, type TabId } from "@/types";
 
@@ -12,13 +18,13 @@ import {
   FaithTab, CareerTab, HabitsTab, GoalsTab,
 } from "@/components/tabs/OtherTabs";
 
-export function AppShell() {
+export function AppShell({ session }: { session: Session }) {
   const [activeTab, setActiveTab] = useState<TabId>("today");
   const { toast, showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
-    data,
+    data, loading,
     addTask, toggleTask, removeTask,
     addHabit, toggleHabit, removeHabit,
     addItem, removeItem,
@@ -28,7 +34,30 @@ export function AppShell() {
     setVision,
     addLink, removeLink,
     doExport, doImport,
-  } = useLifeOS();
+  } = useLifeOS(showToast);
+  const { cyber, setSkillStatus, addLog, removeLog, setSettings } = useCyber(showToast);
+
+  // ── One-time import of pre-Supabase browser data ──────────────────────────
+  const [hasLocal, setHasLocal] = useState(false);
+  useEffect(() => { setHasLocal(!!loadLocalData()); }, []);
+
+  const importLocal = async () => {
+    const local = loadLocalData();
+    if (!local) return;
+    try {
+      await doImport(local);
+      localStorage.setItem(`${STORAGE_KEY}-imported`, new Date().toISOString());
+      localStorage.removeItem(STORAGE_KEY);
+      setHasLocal(false);
+      showToast("Local data imported to the cloud ✓");
+    } catch (e) {
+      showToast(`Import failed: ${(e as Error).message}`);
+    }
+  };
+
+  const signOut = async () => {
+    await getSupabase().auth.signOut();
+  };
 
   // ── Tab navigation ───────────────────────────────────────────────────────
   const navigate = useCallback((tab: string) => {
@@ -50,12 +79,12 @@ export function AppShell() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
-        doImport(reader.result as string);
-        showToast("Backup restored ✓");
-      } catch {
-        showToast("Invalid Life OS backup file");
+        await doImport(reader.result as string);
+        showToast("Backup imported ✓");
+      } catch (err) {
+        showToast(`Import failed: ${(err as Error).message}`);
       }
       if (fileInputRef.current) fileInputRef.current.value = "";
     };
@@ -133,7 +162,7 @@ export function AppShell() {
             title="Restore from a backup"
             style={{ fontSize: 11, background: "#251a31", border: "1px solid #453352", borderRadius: 9, padding: "8px 10px", color: "#cfc0db", cursor: "pointer" }}
           >
-            ↑ Restore
+            ↑ Import
             <input
               ref={fileInputRef}
               type="file"
@@ -142,6 +171,22 @@ export function AppShell() {
               style={{ display: "none" }}
             />
           </label>
+          {hasLocal && (
+            <button
+              onClick={importLocal}
+              title="Copy data saved in this browser (before sign-in) to your account"
+              style={{ fontSize: 11, background: "#3a2650", border: "1px solid #6b4a8a", borderRadius: 9, padding: "8px 10px", color: "#f0e2fb" }}
+            >
+              ⇪ Import local data
+            </button>
+          )}
+          <button
+            onClick={signOut}
+            title={`Signed in as ${session.user.email ?? ""}`}
+            style={{ fontSize: 11, background: "#251a31", border: "1px solid #453352", borderRadius: 9, padding: "8px 10px", color: "#cfc0db" }}
+          >
+            Sign out
+          </button>
         </div>
       </header>
 
@@ -160,10 +205,10 @@ export function AppShell() {
               MAKE TODAY COUNT · YOUR COMMAND CENTER
             </div>
             <h1>
-              {activeTab === "today" ? "Hello, CEO ✦" : tabCfg.name}
+              {activeTab === "today" ? "Your daily momentum ✦" : tabCfg.name}
             </h1>
             <p>
-              {activeTab === "today" ? "Own your day. Build your future." : tabCfg.description}
+              {activeTab === "today" ? "A stronger body. A deeper faith. A day with intention." : tabCfg.description}
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
@@ -181,7 +226,7 @@ export function AppShell() {
             </span>
             <button
               aria-label="App settings"
-              onClick={() => showToast("Data is saved in this browser. Use Backup to export it.")}
+              onClick={() => showToast(`Synced to the cloud as ${session.user.email ?? "you"}.`)}
               style={{ border: "1px solid #44334f", background: "#251a30", padding: "10px 12px", borderRadius: 12, color: "#cdbdde" }}
             >
               ⚙
@@ -189,10 +234,15 @@ export function AppShell() {
           </div>
         </div>
 
+        {loading && <p style={{ color: "#a89ab6" }}>Syncing…</p>}
+
         {/* ── Tab content ───────────────────────────────────────────────── */}
         {activeTab === "today" && (
           <TodayTab
             data={data}
+            userId={session.user.id}
+            onAddWorkout={(name, detail) => addItem("workouts", { name, detail })}
+            onRemoveWorkout={(id) => removeItem("workouts", id)}
             onAddTask={addTask}
             onToggleTask={toggleTask}
             onRemoveTask={removeTask}
@@ -250,6 +300,27 @@ export function AppShell() {
             onAddHabit={addHabit}
             onToggleHabit={toggleHabit}
             onRemoveHabit={removeHabit}
+          />
+        )}
+
+        {activeTab === "cyber" && (
+          <CyberTab
+            cyber={cyber}
+            onSetStatus={setSkillStatus}
+            onAddLog={addLog}
+            onRemoveLog={removeLog}
+            onSetTarget={(h) => setSettings({ weeklyTargetHours: h })}
+          />
+        )}
+
+        {activeTab === "coach" && (
+          <CoachTab
+            data={data}
+            cyber={cyber}
+            onAddTask={addTask}
+            onSetWorkHours={(workStart, workEnd) => setSettings({ workStart, workEnd })}
+            onSetConstraints={(planningConstraints) => setSettings({ planningConstraints })}
+            onToast={showToast}
           />
         )}
 

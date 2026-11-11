@@ -14,3 +14,10 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Cloudflare local secrets and runtime state
+web/.dev.vars*
+web/.wrangler/
+
+# Supabase CLI transient state
+supabase/.temp/

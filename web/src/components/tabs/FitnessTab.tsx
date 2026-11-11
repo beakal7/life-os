@@ -36,8 +36,6 @@ export function FitnessTab({ data, onAddItem, onRemoveItem, onToast }: FitnessTa
     if (wtRef.current) wtRef.current.value = "";
   };
 
-  const todayHabits = data.habits.find(h => h.name === "Bible reading")?.history[todayKey()];
-
   return (
     <>
       <StatGrid stats={[

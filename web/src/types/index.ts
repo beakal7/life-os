@@ -103,6 +103,7 @@ export interface JournalEntry {
 }
 
 export interface QuickLink {
+  id?: UID;
   name: string;
   url: string;
 }
@@ -146,7 +147,9 @@ export type TabId =
   | "faith"
   | "career"
   | "habits"
-  | "goals";
+  | "goals"
+  | "cyber"
+  | "coach";
 
 export interface TabConfig {
   id: TabId;
@@ -162,5 +165,7 @@ export const TAB_CONFIG: TabConfig[] = [
   { id: "faith",   icon: "✦", name: "Faith",              description: "Bible reading, prayer, and spiritual growth." },
   { id: "career",  icon: "⌘", name: "Career & Learning",  description: "Grow your skills and move toward bigger opportunities." },
   { id: "habits",  icon: "◷", name: "Habits & Discipline","description": "Build consistency, one day at a time." },
+  { id: "cyber",   icon: "⛨", name: "Cyber",              description: "Roadmap, labs and study streaks toward top cyber engineer." },
+  { id: "coach",   icon: "✧", name: "AI Coach",           description: "Plan your day, break down tasks, and get coaching." },
   { id: "goals",   icon: "◎", name: "Goals & Reviews",    description: "Turn long-term objectives into progress." },
 ];

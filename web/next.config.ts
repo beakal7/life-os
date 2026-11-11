@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   // Enable strict mode for better React practices
   reactStrictMode: true,
 
+  // Static export for Cloudflare Pages (output dir: out)
+  output: "export",
+  images: { unoptimized: true },
+
   // Future: add Supabase image domains here
   // images: { remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }] },
 

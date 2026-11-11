@@ -1,24 +1,82 @@
-# Life OS v0.2 — personal dashboard
+# Life OS — personal dashboard
 
-## Open locally
-Double-click `index.html` in Chrome. No installation required.
+A personal command center (today, fitness, finance & stocks, faith, career, habits, goals) built with **Next.js 15 (static export)**, **Supabase** (Auth + Postgres with Row Level Security) and hosted on **Cloudflare Pages**.
 
-## Publish to Vercel (free Hobby plan for personal use)
-1. Sign into https://vercel.com/new and import a GitHub repository containing `index.html` and `manifest.webmanifest`; or install CLI with `npm i -g vercel`.
-2. From this directory run `vercel login` and `vercel --prod`. For a static site, set Framework Preset to Other and Output Directory blank/default.
-3. Open the given HTTPS URL on iPhone and Mac. In Safari, Share > Add to Home Screen.
+## Repo layout
 
-## Important: Data and privacy
-All data is saved to **browser localStorage**. Both devices can access the published web app, but their entries **do not sync yet**. Use Backup / Restore to manually transfer. Do not enter sensitive financial/account information; there is no login, encryption-at-rest under an account, automatic backup or cloud synchronization. Publishing a URL alone does not make the app private.
+```
+web/                     Next.js app (the only app)
+  functions/api/ai.ts    Cloudflare Pages Function: authenticated Gemini proxy
+  src/app/               layout + page (client-side auth gate)
+  src/components/        AppShell, tabs, widgets, auth/AuthGate
+  src/hooks/useLifeOS.ts state + optimistic updates
+  src/lib/db.ts          Supabase data layer (14 tables)
+  src/lib/supabase/      browser Supabase client
+  src/lib/storage.ts     defaults, backup export/parse, helpers
+supabase/migrations/     database schema, RLS policies, new-user trigger
+legacy/                  original single-file index.html version (v0.2)
+```
 
-## Features
-- Interactive month grid with daily habit markers
-- Daily inspiration, editable vision, favorite links
-- Habit checklist and current streak counts
-- Daily/weekly top-three priorities
-- 25-minute focus timer plus task inbox and reflections
-- Fitness, finance & stocks (MANUAL prices), faith, career, habits, goals tabs
-- Export/import JSON backup
+## Local development
 
-## Next phase
-Connect authenticated Supabase data with row-level security, migrate browser data, then enable cloud synchronization. Add live quote API and Kiro Crew automation separately.
+```bash
+cd web
+cp .env.local.example .env.local   # fill in URL + publishable key
+npm install
+npm run dev                        # http://localhost:3000
+```
+
+Scripts: `npm run lint`, `npm run type-check`, `npm run build` (writes the static site to `web/out`).
+
+## Supabase
+
+1. Create a project (free tier is fine) and apply `supabase/migrations/*.sql`
+   (`supabase link --project-ref <ref> && supabase db push`, or paste into the SQL editor).
+2. Tables: `profiles`, `tasks`, `habits`, `habit_logs`, `workouts`, `weight_entries`, `prayers`, `readings`, `skills`, `goals`, `budget_entries`, `stocks`, `journal_entries`, `quick_links`.
+   Every row has `user_id default auth.uid()`; RLS restricts select/insert/update/delete to the owner.
+   A trigger on `auth.users` creates the profile, default habits and quick links for new users.
+3. Auth → URL Configuration: set **Site URL** to your production URL and add redirect URLs
+   (`http://localhost:3000/**`, `https://<project>.pages.dev/**`, your custom domain).
+4. After creating your own account, disable public sign-ups (Auth → Sign In / Providers) for single-user use.
+
+## Deploy to Cloudflare Pages
+
+Workers & Pages → Create → Pages → Connect to Git → `beakal7/life-os`:
+
+| Setting | Value |
+|---|---|
+| Framework preset | None (or Next.js (Static HTML Export)) |
+| Root directory | `web` |
+| Build command | `npm run build` |
+| Build output directory | `out` |
+| Env var `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` |
+| Env var `NEXT_PUBLIC_SUPABASE_ANON_KEY` | your **publishable** key (`sb_publishable_…`) |
+| Env var `NODE_VERSION` | `24` |
+
+`NEXT_PUBLIC_*` values are inlined at build time, so redeploy after changing them.
+Never put the service role key in this app.
+
+## AI assistant
+
+- **AI Coach tab:** chat with context from your tasks, goals, habits and cyber progress, a **Plan my day** button (using work hours and saved shifts, commute, and recovery constraints), and **task breakdown** into subtasks you can add to your inbox.
+- Powered by the **Google Gemini API free tier** (`gemini-2.5-flash` by default) through `web/functions/api/ai.ts`. The function checks your Supabase access token, then calls Gemini with the server-side secret, so the key never reaches the browser.
+- Setup: create a free key at https://aistudio.google.com/apikey, then in Cloudflare Pages → life-os → Settings → Variables and Secrets add **`GEMINI_API_KEY`** as a *Secret* (Production and Preview). Optional: `GEMINI_MODEL`. Redeploy. Until the key is set, the tab shows "AI not configured yet".
+- **Open in ChatGPT / Open in Claude:** builds the same context-rich prompt and opens `chatgpt.com/?q=…` or `claude.ai/new?q=…` (uses your existing Plus/Pro web subscriptions; the prompt is also copied to the clipboard as a fallback).
+- **Chat history** is optional (checkbox), stored in the `ai_messages` table with RLS.
+- Free-tier note: Google may use free-tier prompts to improve its products, so avoid pasting sensitive work data.
+
+For the deployment checklist and migration order, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Motivational home
+
+The home page puts today’s workout, a weekly gym goal streak, and a six-day church study tracker first. Edit each day’s training plan, log training or recovery, mark study days, and save reflections. Progress is stored in your private Supabase profile; workout completions also appear in Fitness. The calendar opens to the current month and marks gym, habit, and connected Google events. See [Google Calendar setup](DEPLOYMENT.md#motivational-home-and-google-calendar) to enable read-only Google access.
+
+## Cyber tab
+
+Skills roadmap (networking, Linux, Python/Bash, cloud security AWS/Azure, SIEM/detection, pentesting, certs Security+ → CySA+/AZ-500 → OSCP), a lab/study log (TryHackMe, HackTheBox, courses…), study streak, and a weekly hours target. Tables: `cyber_skills`, `cyber_logs`; settings live on `profiles`.
+
+## Data & privacy
+
+- Login: email + password or magic link (Supabase Auth). The page is a static site; the auth gate runs in the browser and **Row Level Security** is what protects your data.
+- Migrating from the old browser-only version: sign in, then click **Import local data** (reads `localStorage["lifeos-v1"]`) or **Import** a JSON backup. **Backup** downloads a JSON export at any time.
+- Stock prices are entered manually.
