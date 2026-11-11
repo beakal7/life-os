@@ -316,6 +316,7 @@ export function AppShell({ session }: { session: Session }) {
             cyber={cyber}
             onAddTask={addTask}
             onSetWorkHours={(workStart, workEnd) => setSettings({ workStart, workEnd })}
+            onSetConstraints={(planningConstraints) => setSettings({ planningConstraints })}
             onToast={showToast}
           />
         )}

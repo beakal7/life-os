@@ -17,9 +17,9 @@ export class AIError extends Error {
 }
 
 export const COACH_SYSTEM = `You are "LifeOS Coach", a direct, encouraging productivity and career coach for Beakal.
-He works a full-time job as a Cloud & Product Security Analyst and is working to become a top cyber security engineer
+Use the work commitments provided in the dashboard context. He is working to become a top cyber security engineer
 (cloud security, detection engineering, and offensive skills; cert path Security+ -> CySA+/AZ-500 -> OSCP).
-Be concrete and realistic about limited time outside work. Prefer short bullet lists, specific next actions,
+Be concrete and realistic about limited time outside work. Protect sleep and recovery; never schedule overlapping commitments. Do not request confidential employer data. Prefer short bullet lists, specific next actions,
 and time estimates. Never invent data that isn't in the context.`;
 
 /** Compact plain-text snapshot of the user's dashboard for AI context. */
@@ -41,6 +41,7 @@ export function buildContext(data: LifeOSData, cyber: CyberState): string {
   return [
     `Today: ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`,
     `Work hours: ${cyber.workStart}–${cyber.workEnd} (weekdays)`,
+    cyber.planningConstraints ? `Additional commitments and planning constraints: ${cyber.planningConstraints}` : "",
     data.vision ? `Vision: ${data.vision}` : "",
     section("Today's top 3", top3),
     section("This week's top 3", week3),
@@ -67,6 +68,7 @@ export async function callAI(opts: { system?: string; messages: ChatMessage[]; j
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify(opts),
+      signal: AbortSignal.timeout(60000),
     });
   } catch {
     throw new AIError("network", "Couldn't reach the AI service.");
@@ -101,7 +103,9 @@ export function parseSubtasks(text: string): { name: string; minutes?: number }[
   if (!match) return [];
   try {
     const obj = JSON.parse(match[0]) as { subtasks?: { name: string; minutes?: number }[] };
-    return (obj.subtasks ?? []).filter((s) => typeof s?.name === "string" && s.name.trim()).slice(0, 10);
+    if (!Array.isArray(obj.subtasks)) return [];
+    return obj.subtasks.filter((s) => typeof s?.name === "string" && s.name.trim()).slice(0, 10)
+      .map((s) => ({ name: s.name.trim(), minutes: typeof s.minutes === "number" && Number.isFinite(s.minutes) && s.minutes > 0 ? Math.min(90, Math.round(s.minutes)) : undefined }));
   } catch {
     return [];
   }
@@ -121,18 +125,23 @@ export type ExternalTarget = "chatgpt" | "claude";
  * Open the prompt in ChatGPT or Claude. The prompt is also copied to the
  * clipboard so it can be pasted if the ?q= prefill isn't honored or is too long.
  */
-export async function openExternal(target: ExternalTarget, prompt: string): Promise<"opened" | "copied"> {
+export async function openExternal(target: ExternalTarget, prompt: string): Promise<"opened" | "copied" | "opened_without_copy" | "blocked"> {
+  // Open synchronously within the click gesture; clipboard awaits can block popups.
+  const win = window.open("about:blank", "_blank");
+  if (win) win.opener = null;
   let copied = false;
   try {
     await navigator.clipboard.writeText(prompt);
     copied = true;
-  } catch {
-    /* clipboard may be unavailable */
+  } catch { /* Prefill remains available for short prompts. */ }
+  const base = target === "chatgpt" ? "https://chatgpt.com/" : "https://claude.ai/new";
+  // Never silently truncate dashboard context.
+  const url = prompt.length <= MAX_URL_PROMPT ? `${base}?q=${encodeURIComponent(prompt)}` : base;
+  if (win) {
+    win.location.replace(url);
+    return copied ? "opened" : "opened_without_copy";
   }
-  const q = encodeURIComponent(prompt.length > MAX_URL_PROMPT ? prompt.slice(0, MAX_URL_PROMPT) : prompt);
-  const url = target === "chatgpt" ? `https://chatgpt.com/?q=${q}` : `https://claude.ai/new?q=${q}`;
-  const win = window.open(url, "_blank", "noopener,noreferrer");
-  return win || !copied ? "opened" : "copied";
+  return copied ? "copied" : "blocked";
 }
 
 // ── Optional chat history (Supabase table ai_messages) ───────────────────────

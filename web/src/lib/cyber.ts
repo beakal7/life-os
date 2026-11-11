@@ -78,6 +78,7 @@ export interface CyberState {
   workStart: string;
   workEnd: string;
   weeklyTargetHours: number;
+  planningConstraints: string;
 }
 
 /** Monday-start week key range: returns ISO date (YYYY-MM-DD) of this week's Monday. */
@@ -103,5 +104,5 @@ export function studyStreak(logs: CyberLog[]): number {
 
 export function minutesThisWeek(logs: CyberLog[]): number {
   const start = weekStart();
-  return logs.filter((l) => l.date >= start).reduce((n, l) => n + l.minutes, 0);
+  return logs.filter((l) => l.date >= start && l.date <= new Date().toLocaleDateString("en-CA")).reduce((n, l) => n + l.minutes, 0);
 }

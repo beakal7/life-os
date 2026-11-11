@@ -51,19 +51,21 @@ Workers & Pages → Create → Pages → Connect to Git → `beakal7/life-os`:
 | Build output directory | `out` |
 | Env var `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` |
 | Env var `NEXT_PUBLIC_SUPABASE_ANON_KEY` | your **publishable** key (`sb_publishable_…`) |
-| Env var `NODE_VERSION` | `20` |
+| Env var `NODE_VERSION` | `24` |
 
 `NEXT_PUBLIC_*` values are inlined at build time, so redeploy after changing them.
 Never put the service role key in this app.
 
-## AI assistant (free)
+## AI assistant
 
-- **AI Coach tab:** chat with context from your tasks, goals, habits and cyber progress, a **Plan my day** button (time-blocked around your work hours), and **task breakdown** into subtasks you can add to your inbox.
+- **AI Coach tab:** chat with context from your tasks, goals, habits and cyber progress, a **Plan my day** button (using work hours and saved shifts, commute, and recovery constraints), and **task breakdown** into subtasks you can add to your inbox.
 - Powered by the **Google Gemini API free tier** (`gemini-2.5-flash` by default) through `web/functions/api/ai.ts`. The function checks your Supabase access token, then calls Gemini with the server-side secret, so the key never reaches the browser.
 - Setup: create a free key at https://aistudio.google.com/apikey, then in Cloudflare Pages → life-os → Settings → Variables and Secrets add **`GEMINI_API_KEY`** as a *Secret* (Production and Preview). Optional: `GEMINI_MODEL`. Redeploy. Until the key is set, the tab shows "AI not configured yet".
 - **Open in ChatGPT / Open in Claude:** builds the same context-rich prompt and opens `chatgpt.com/?q=…` or `claude.ai/new?q=…` (uses your existing Plus/Pro web subscriptions; the prompt is also copied to the clipboard as a fallback).
 - **Chat history** is optional (checkbox), stored in the `ai_messages` table with RLS.
 - Free-tier note: Google may use free-tier prompts to improve its products, so avoid pasting sensitive work data.
+
+For the deployment checklist and migration order, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Cyber tab
 

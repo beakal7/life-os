@@ -9,13 +9,16 @@ import {
   type ChatMessage, type ExternalTarget,
 } from "@/lib/ai";
 
-export function CoachTab({ data, cyber, onAddTask, onSetWorkHours, onToast }: {
+export function CoachTab({ data, cyber, onAddTask, onSetWorkHours, onSetConstraints, onToast }: {
   data: LifeOSData;
   cyber: CyberState;
   onAddTask: (name: string) => void;
   onSetWorkHours: (start: string, end: string) => void;
   onToast: (msg: string) => void;
+  onSetConstraints: (value: string) => void;
 }) {
+  const [constraints, setConstraints] = useState(cyber.planningConstraints);
+  useEffect(() => setConstraints(cyber.planningConstraints), [cyber.planningConstraints]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -84,7 +87,10 @@ export function CoachTab({ data, cyber, onAddTask, onSetWorkHours, onToast }: {
 
   const external = async (target: ExternalTarget, question: string) => {
     const res = await openExternal(target, externalPrompt(question, context()));
-    onToast(res === "copied" ? "Popup blocked — prompt copied, paste it into the chat." : "Prompt copied too, in case it doesn't prefill.");
+    onToast(res === "copied" ? "Popup blocked — prompt copied. Open your assistant and paste it."
+      : res === "blocked" ? "Browser blocked the popup and clipboard. Allow popups and try again."
+      : res === "opened_without_copy" ? "Assistant opened. Clipboard unavailable; check the prompt before sending."
+      : "Full prompt copied — paste it into your assistant if needed.");
   };
 
   const toggleHistory = (on: boolean) => {
@@ -102,7 +108,7 @@ export function CoachTab({ data, cyber, onAddTask, onSetWorkHours, onToast }: {
         <section className="card" style={{ borderColor: "#6b4a8a" }}>
           <h2>AI not configured yet</h2>
           <p style={{ fontSize: 13 }}>
-            The built-in coach needs a free Google Gemini API key added as the <code>GEMINI_API_KEY</code> secret in
+            The built-in coach needs a Google Gemini API key added as the <code>GEMINI_API_KEY</code> secret in
             Cloudflare Pages. Until then, use <strong>Open in ChatGPT</strong> or <strong>Open in Claude</strong> below —
             they send the same dashboard context to your existing subscriptions.
           </p>
@@ -126,6 +132,14 @@ export function CoachTab({ data, cyber, onAddTask, onSetWorkHours, onToast }: {
             <button className="btn-ghost" onClick={() => external("claude", "Plan my day around my work hours.")}>Claude</button>
           </div>
         </div>
+        <label style={{ display: "block", marginTop: 12, fontSize: 13 }}>
+          Other work, shifts and recovery time
+          <textarea className="life-input" rows={3} maxLength={3000} value={constraints}
+            placeholder="e.g. Second job Mon/Wed 6–9pm, commute 30m, sleep 11pm–7am. Keep Friday evening free."
+            onChange={(e) => setConstraints(e.target.value)} style={{ display: "block", width: "100%", marginTop: 6 }} />
+        </label>
+        <button className="btn-subtle" disabled={constraints === cyber.planningConstraints}
+          onClick={() => onSetConstraints(constraints.trim())}>Save planning constraints</button>
         {plan && <div style={{ whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.55, marginTop: 12 }}>{plan}</div>}
       </section>
 
@@ -159,7 +173,7 @@ export function CoachTab({ data, cyber, onAddTask, onSetWorkHours, onToast }: {
               <input type="checkbox" checked={saveHistory} onChange={(e) => toggleHistory(e.target.checked)} />
               Save chat history
             </label>
-            <button className="btn-subtle" onClick={async () => {
+            <button className="btn-subtle" disabled={busy} onClick={async () => {
               setMessages([]);
               if (saveHistory) await clearHistory().catch((e: Error) => onToast(e.message));
             }}>Clear</button>

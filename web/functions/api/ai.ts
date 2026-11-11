@@ -24,8 +24,6 @@ interface Ctx {
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-const DEFAULT_SUPABASE_URL = "https://jisbwkrapuwdtvwxevru.supabase.co";
-const DEFAULT_PUBLISHABLE_KEY = "sb_publishable_j38vkbhjxgMHLnwAfQ93sg_BskbGtrG";
 const MAX_MESSAGES = 30;
 const MAX_CHARS = 24000;
 
@@ -38,16 +36,21 @@ const json = (body: unknown, status = 200) =>
 async function verifyUser(request: Request, env: Env): Promise<{ id: string; email?: string } | null> {
   const auth = request.headers.get("authorization") ?? "";
   if (!auth.toLowerCase().startsWith("bearer ")) return null;
-  const url = env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-  const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_PUBLISHABLE_KEY;
-  const res = await fetch(`${url}/auth/v1/user`, { headers: { authorization: auth, apikey: key } });
+  const url = env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const res = await fetch(`${url}/auth/v1/user`, { headers: { authorization: auth, apikey: key }, signal: AbortSignal.timeout(10000) });
   if (!res.ok) return null;
   const user = (await res.json()) as { id?: string; email?: string };
   return user.id ? { id: user.id, email: user.email } : null;
 }
 
 export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> => {
-  const user = await verifyUser(request, env);
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return json({ error: "not_configured", message: "Authentication is not configured for the AI service." }, 503);
+  }
+  let user;
+  try { user = await verifyUser(request, env); }
+  catch { return json({ error: "auth_unavailable", message: "Sign-in verification is temporarily unavailable. Try again." }, 503); }
   if (!user) return json({ error: "unauthorized", message: "Sign in again." }, 401);
 
   if (!env.GEMINI_API_KEY) {
@@ -61,6 +64,13 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
     return json({ error: "bad_request", message: "Invalid JSON body." }, 400);
   }
 
+  if (!body || typeof body !== "object" || !Array.isArray(body.messages)
+    || (body.system !== undefined && typeof body.system !== "string")
+    || (body.json !== undefined && typeof body.json !== "boolean")
+    || body.messages.some((m) => !m || typeof m !== "object"
+      || (m.role !== "user" && m.role !== "assistant") || typeof m.content !== "string")) {
+    return json({ error: "bad_request", message: "Expected messages with a role and text content." }, 400);
+  }
   const messages = (body.messages ?? [])
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
     .slice(-MAX_MESSAGES);
@@ -82,14 +92,20 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
     },
   };
 
-  const res = await fetch(
+  let res: Response;
+  try {
+  res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(45000),
     }
   );
+  } catch {
+    return json({ error: "upstream", message: "The AI service timed out or could not be reached. Try again." }, 504);
+  }
 
   if (!res.ok) {
     const status = res.status === 429 ? 429 : 502;
@@ -100,12 +116,15 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
     return json({ error: "upstream", message }, status);
   }
 
-  const data = (await res.json()) as {
+  let data: {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
   };
+  try { data = await res.json(); }
+  catch { return json({ error: "upstream", message: "The AI service returned an invalid response." }, 502); }
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+  if (!text.trim()) return json({ error: "empty_response", message: "The AI returned no text. Try rephrasing your request." }, 502);
   return json({ text, model });
 };
 
-export const onRequest = async (): Promise<Response> =>
+export const onRequestGet = async (): Promise<Response> =>
   json({ error: "method_not_allowed", message: "Use POST." }, 405);

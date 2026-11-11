@@ -6,7 +6,7 @@ import { insertRow, deleteRow, updateProfile } from "@/lib/db";
 import { todayKey, uid } from "@/lib/storage";
 import type { CyberLog, CyberState, SkillStatus } from "@/lib/cyber";
 
-const EMPTY: CyberState = { skills: {}, logs: [], workStart: "09:00", workEnd: "17:00", weeklyTargetHours: 8 };
+const EMPTY: CyberState = { skills: {}, logs: [], workStart: "09:00", workEnd: "17:00", weeklyTargetHours: 8, planningConstraints: "" };
 
 export function useCyber(onError?: (msg: string) => void) {
   const [state, setState] = useState<CyberState>(EMPTY);
@@ -20,7 +20,7 @@ export function useCyber(onError?: (msg: string) => void) {
     const [skills, logs, profile] = await Promise.all([
       sb.from("cyber_skills").select("key,status"),
       sb.from("cyber_logs").select("*").order("date", { ascending: false }).order("created_at", { ascending: false }),
-      sb.from("profiles").select("work_start,work_end,cyber_weekly_target_hours").maybeSingle(),
+      sb.from("profiles").select("work_start,work_end,cyber_weekly_target_hours,planning_constraints").maybeSingle(),
     ]);
     const err = skills.error || logs.error || profile.error;
     if (err) {
@@ -33,6 +33,7 @@ export function useCyber(onError?: (msg: string) => void) {
       workStart: profile.data?.work_start ?? "09:00",
       workEnd: profile.data?.work_end ?? "17:00",
       weeklyTargetHours: Number(profile.data?.cyber_weekly_target_hours ?? 8),
+      planningConstraints: profile.data?.planning_constraints ?? "",
     });
   }, []);
 
@@ -66,12 +67,13 @@ export function useCyber(onError?: (msg: string) => void) {
     run(deleteRow("cyber_logs", id));
   }, [run]);
 
-  const setSettings = useCallback((patch: Partial<Pick<CyberState, "workStart" | "workEnd" | "weeklyTargetHours">>) => {
+  const setSettings = useCallback((patch: Partial<Pick<CyberState, "workStart" | "workEnd" | "weeklyTargetHours" | "planningConstraints">>) => {
     setState((s) => ({ ...s, ...patch }));
     const db: Record<string, unknown> = {};
     if (patch.workStart !== undefined) db.work_start = patch.workStart;
     if (patch.workEnd !== undefined) db.work_end = patch.workEnd;
     if (patch.weeklyTargetHours !== undefined) db.cyber_weekly_target_hours = patch.weeklyTargetHours;
+    if (patch.planningConstraints !== undefined) db.planning_constraints = patch.planningConstraints;
     run(updateProfile(db));
   }, [run]);
 
