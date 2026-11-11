@@ -7,7 +7,7 @@ test('steps distinguish not entered from an entered zero',()=>{
 });
 test('persisted check-ins keep valid progress and unique calendar IDs',()=>{
  const value=normalizeCheckin({prayer:true,pushups:100,steps:6500,calendar_done:['meeting','meeting','lab']});
- assert.deepEqual(value,{prayer:true,pushups:100,steps:6500,calendar_done:['meeting','lab']});
+ assert.equal(value.prayer,true);assert.equal(value.pushups,100);assert.equal(value.steps,6500);assert.deepEqual(value.calendar_done,['meeting','lab']);assert.equal(value.studied,false);assert.equal(value.one_percent,'');
  assert.equal(normalizeCheckin({pushups:-5}).pushups,0);
  assert.equal(normalizeCheckin({steps:Infinity}).steps,0);
 });

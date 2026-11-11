@@ -10,7 +10,7 @@ export function useCheckin(userId:string,date:string){
   const generation=useRef(0);
   useEffect(()=>{
     const id=++generation.current;setReady(false);setError('');setPending(0);
-    getSupabase().from('daily_checkins').select('prayer,pushups,steps,calendar_done').eq('user_id',userId).eq('date',date).maybeSingle().then(({data,error})=>{
+    getSupabase().from('daily_checkins').select('prayer,pushups,steps,calendar_done,studied,learning_note,one_percent,one_percent_done').eq('user_id',userId).eq('date',date).maybeSingle().then(({data,error})=>{
       if(id!==generation.current)return;
       if(error)setError(`Could not load your checklist: ${error.message}`);
       else{current.current=normalizeCheckin(data);setValue(current.current);setReady(true);}

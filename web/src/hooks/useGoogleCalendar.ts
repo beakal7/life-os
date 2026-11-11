@@ -9,9 +9,9 @@ type GoogleIdentity = { accounts: { oauth2: {
   revoke: (token:string,callback:()=>void)=>void;
 } } };
 declare global { interface Window { google?: GoogleIdentity } }
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const SCOPE = 'https://www.googleapis.com/auth/calendar.events.readonly';
-export function useGoogleCalendar(month: Date) {
+export function useGoogleCalendar(month: Date, clientId?: string) {
+  const CLIENT_ID = clientId?.trim() || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const [events,setEvents] = useState<CalendarEvent[]>([]);
   const [connected,setConnected] = useState(false);
   const [ready,setReady] = useState(false);
@@ -23,6 +23,8 @@ export function useGoogleCalendar(month: Date) {
   const client = useRef<TokenClient|null>(null);
   const requestId = useRef(0);
   useEffect(()=>{
+    setReady(false);setConnected(false);setEvents([]);setLoading(false);setError("");
+    client.current=null;token.current=null;requestId.current++;
     if(!CLIENT_ID) return;
     let active=true;
     const init = ()=>{
@@ -47,7 +49,7 @@ export function useGoogleCalendar(month: Date) {
       script.addEventListener('error',()=>{if(active) setError('Google sign-in could not load. Check your connection and reload.');},{once:true});
     }
     return ()=>{active=false;script?.removeEventListener('load',init);token.current=null;};
-  },[]);
+  },[CLIENT_ID]);
   const year=month.getFullYear(), index=month.getMonth();
   useEffect(()=>{
     if(!connected || !token.current) return;

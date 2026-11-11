@@ -34,7 +34,7 @@ For Google Calendar:
 1. Enable the Google Calendar API in a Google Cloud project.
 2. Configure an OAuth consent screen and add your Google account as a test user if the app is in testing.
 3. Create an OAuth client of type Web application. Add `https://life-os-3dp.pages.dev` (and the exact custom/preview origins you use) to Authorized JavaScript origins. Add `http://localhost:3000` for local testing.
-4. Set build variable `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to that OAuth client ID and rebuild/redeploy. This is a public identifier, not a client secret. No client secret is needed for this browser token flow.
+4. On the LifeOS home page, expand **How to connect Google Calendar**, paste the public OAuth Client ID, and save. It is stored in your private profile; no deployment is needed. `NEXT_PUBLIC_GOOGLE_CLIENT_ID` remains an optional build-time fallback. Never paste a client secret. No client secret is needed for this browser popup flow.
 5. In the home calendar, click Connect Google Calendar and approve read-only event access. Events from your primary Google calendar appear as blue dots and in the selected date's agenda.
 
 The Google access token stays in memory, is never saved to Supabase/localStorage, and is cleared when the home widget unmounts or the user disconnects. Reconnect after reloading or after token expiry. Refresh explicitly after changing events in Google. Paginated, recurring, all-day, and multiday events are supported. Secondary calendars and background server synchronization are not included. The chat's Google Calendar connection cannot be reused as the website's OAuth credentials.
@@ -45,3 +45,8 @@ The application does not create or edit Google events. Without Google configurat
 ## Daily checklist
 
 Apply the `daily_checkins` migration before deploying the simplified home. This table has one owner-protected row per user and local date for prayer, push-ups, manual steps, and completed calendar event IDs. Steps have no default goal; blank means not logged. Gym/recovery completion continues to use the existing workout log, and planned recovery does not inflate gym streaks. Checklist writes are serialized so quick edits cannot arrive out of order; failed saves offer a retry.
+
+
+## Knowledge, small wins and achievements
+
+Apply the `knowledge_and_small_wins` migration before deploying. It adds dated study/review, learning notes, a specific daily small action, and that action’s completion flag to the existing owner-protected check-ins. Course progress remains in the private profile. Achievements are derived from actual logs rather than stored points: partial days, three-day rhythm, seven cumulative active days, accumulated reps, dated study, course completion, and returning after a gap. Future-dated logs are excluded. Earlier progress survives missed days; correcting logs also corrects the derived badges. The activity strip covers the last 14 days and does not imply measured percentage improvement.

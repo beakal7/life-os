@@ -1,6 +1,7 @@
 export type WorkoutDay = { name: string; exercises: string; training: boolean };
 export type CalendarEvent = { id: string; summary: string; start: string; end: string; allDay: boolean; url?: string };
 export type HomeSettings = {
+  googleClientId?: string;
   weeklyGymTarget: number;
   plan: WorkoutDay[];
   faith: { title: string; completed: number[]; endDate: string; notes: string };
@@ -29,6 +30,7 @@ export function readHome(value: unknown): HomeSettings {
   if (!value || typeof value !== 'object') return defaults;
   const v = value as Partial<HomeSettings>;
   return {
+    googleClientId: typeof v.googleClientId === "string" ? v.googleClientId.trim() : "",
     weeklyGymTarget: typeof v.weeklyGymTarget === 'number' && v.weeklyGymTarget >= 1 && v.weeklyGymTarget <= 7 ? Math.round(v.weeklyGymTarget) : 4,
     plan: Array.isArray(v.plan) && v.plan.length === 7 ? v.plan.map((d,i) => d && typeof d.name === 'string' && typeof d.exercises === 'string' && typeof d.training === 'boolean' ? d : defaults.plan[i]) : defaults.plan,
     faith: {
