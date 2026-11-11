@@ -1,6 +1,6 @@
 # Finish the existing Cloudflare deployment
 
-The completed source is based on `origin/ai-assistant`, not the older `main` branch. This checkout has not been pushed, merged, or deployed. Existing production data has not been modified.
+The application is a static Next.js export with Cloudflare Pages Functions and a Supabase backend. Apply only migrations that are missing from the target database, and verify the deployed branch and production URL before making changes.
 
 1. Review and merge this branch into `main`. The included GitHub workflow checks lint, types, AI endpoint behavior, and the static build with Node 24.
 2. Apply unapplied Supabase migrations in timestamp order. For an existing database, check the migration history first; do not re-run the initial schema over existing tables. The cyber/AI migration creates three owner-protected tables; the final migration adds private planning constraints to profiles.
@@ -24,3 +24,19 @@ The completed source is based on `origin/ai-assistant`, not the older `main` bra
 
 Use Node 24, `cd web`, `npm ci`, `npm run lint`, `npm run type-check`, `npm test`, `npm run build`.
 `npm run dev` serves the dashboard but not the Pages Function. For the full local stack, build and run `npx wrangler@4 pages dev out` from `web`, with secrets in a gitignored `.dev.vars` file.
+
+## Motivational home and Google Calendar
+
+The `motivational_home` migration adds the `home_settings` JSON field to profiles, using the existing owner-only policies. It stores the weekly workout plan, gym target, and six-day church study progress/reflections. Workout completions use the existing workouts table. Recovery sessions are labeled separately and do not count toward gym goals. The gym streak counts consecutive weeks meeting the selected target, including the current week once its goal is met. Religious course details are private profile data, not source defaults.
+
+For Google Calendar:
+
+1. Enable the Google Calendar API in a Google Cloud project.
+2. Configure an OAuth consent screen and add your Google account as a test user if the app is in testing.
+3. Create an OAuth client of type Web application. Add `https://life-os-3dp.pages.dev` (and the exact custom/preview origins you use) to Authorized JavaScript origins. Add `http://localhost:3000` for local testing.
+4. Set build variable `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to that OAuth client ID and rebuild/redeploy. This is a public identifier, not a client secret. No client secret is needed for this browser token flow.
+5. In the home calendar, click Connect Google Calendar and approve read-only event access. Events from your primary Google calendar appear as blue dots and in the selected date's agenda.
+
+The Google access token stays in memory, is never saved to Supabase/localStorage, and is cleared when the home widget unmounts or the user disconnects. Reconnect after reloading or after token expiry. Refresh explicitly after changing events in Google. Paginated, recurring, all-day, and multiday events are supported. Secondary calendars and background server synchronization are not included. The chat's Google Calendar connection cannot be reused as the website's OAuth credentials.
+
+The application does not create or edit Google events. Without Google configuration, gym/habit calendar tracking remains available and the page explains the missing setup.

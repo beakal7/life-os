@@ -205,10 +205,10 @@ export function AppShell({ session }: { session: Session }) {
               MAKE TODAY COUNT · YOUR COMMAND CENTER
             </div>
             <h1>
-              {activeTab === "today" ? "Hello, CEO ✦" : tabCfg.name}
+              {activeTab === "today" ? "Your daily momentum ✦" : tabCfg.name}
             </h1>
             <p>
-              {activeTab === "today" ? "Own your day. Build your future." : tabCfg.description}
+              {activeTab === "today" ? "A stronger body. A deeper faith. A day with intention." : tabCfg.description}
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
@@ -240,6 +240,9 @@ export function AppShell({ session }: { session: Session }) {
         {activeTab === "today" && (
           <TodayTab
             data={data}
+            userId={session.user.id}
+            onAddWorkout={(name, detail) => addItem("workouts", { name, detail })}
+            onRemoveWorkout={(id) => removeItem("workouts", id)}
             onAddTask={addTask}
             onToggleTask={toggleTask}
             onRemoveTask={removeTask}

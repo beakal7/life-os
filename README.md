@@ -67,6 +67,10 @@ Never put the service role key in this app.
 
 For the deployment checklist and migration order, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
+## Motivational home
+
+The home page puts today’s workout, a weekly gym goal streak, and a six-day church study tracker first. Edit each day’s training plan, log training or recovery, mark study days, and save reflections. Progress is stored in your private Supabase profile; workout completions also appear in Fitness. The calendar opens to the current month and marks gym, habit, and connected Google events. See [Google Calendar setup](DEPLOYMENT.md#motivational-home-and-google-calendar) to enable read-only Google access.
+
 ## Cyber tab
 
 Skills roadmap (networking, Linux, Python/Bash, cloud security AWS/Azure, SIEM/detection, pentesting, certs Security+ → CySA+/AZ-500 → OSCP), a lab/study log (TryHackMe, HackTheBox, courses…), study streak, and a weekly hours target. Tables: `cyber_skills`, `cyber_logs`; settings live on `profiles`.
