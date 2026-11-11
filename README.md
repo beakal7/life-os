@@ -69,7 +69,7 @@ For the deployment checklist and migration order, see [DEPLOYMENT.md](DEPLOYMENT
 
 ## Motivational home
 
-The home page puts today’s workout, a weekly gym goal streak, and a six-day church study tracker first. Edit each day’s training plan, log training or recovery, mark study days, and save reflections. Progress is stored in your private Supabase profile; workout completions also appear in Fitness. The calendar opens to the current month and marks gym, habit, and connected Google events. See [Google Calendar setup](DEPLOYMENT.md#motivational-home-and-google-calendar) to enable read-only Google access.
+The home page is a daily checklist: prayer, a 100-push-up counter, manual steps, gym or recovery, and checkable events from a connected primary Google Calendar. Counts and checks are private, saved per local date in `daily_checkins`, and reset for each new day while history remains stored. Calendar checks do not modify Google events. Finance navigation is deferred. The existing workout plan and church study tracker remain under a collapsed section below the checklist. See [Google Calendar setup](DEPLOYMENT.md#motivational-home-and-google-calendar) to enable read-only event access.
 
 ## Cyber tab
 
