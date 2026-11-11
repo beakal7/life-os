@@ -5,6 +5,10 @@ import { dateKey,eventOnDay,gymStats } from '@/lib/home';
 import { useCheckin } from '@/hooks/useCheckin';
 import { useHome } from '@/hooks/useHome';
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
+import { KnowledgeCard,SmallWin } from '@/components/widgets/KnowledgeCard';
+import { AchievementTracker } from '@/components/widgets/AchievementTracker';
+import { GoogleCalendarSetup } from '@/components/widgets/GoogleCalendarSetup';
+import { useCheckinHistory } from '@/hooks/useCheckinHistory';
 import { MotivationTrackerView } from '@/components/widgets/MotivationTracker';
 // Keep the existing shell callbacks compatible while simplifying the home view.
 interface TodayTabProps {
@@ -20,7 +24,9 @@ export function TodayTab({data,userId,onAddWorkout,onRemoveWorkout}:TodayTabProp
   const date=new Date(`${today}T12:00:00`);
   const tracker=useHome(userId);
   const checkin=useCheckin(userId,today);
-  const calendar=useGoogleCalendar(date);
+  const calendar=useGoogleCalendar(date,tracker.settings.googleClientId);
+  const history=useCheckinHistory(userId,today);
+  const records=checkin.ready?[...history.records.filter(r=>r.date!==today),{date:today,...checkin.value}]:history.records;
   const [steps,setSteps]=useState(''),[pushups,setPushups]=useState('0');
   useEffect(()=>{setSteps(checkin.value.steps===null?'':String(checkin.value.steps));setPushups(String(checkin.value.pushups));},[checkin.value.steps,checkin.value.pushups,today]);
   const session=tracker.settings.plan[date.getDay()];
@@ -32,7 +38,9 @@ export function TodayTab({data,userId,onAddWorkout,onRemoveWorkout}:TodayTabProp
   const saveSteps=()=>{const next=steps.trim()===''?null:Math.max(0,Math.min(200000,Math.round(Number(steps)||0)));if(next!==checkin.value.steps)checkin.update({steps:next});};
   const savePushups=()=>{const next=Math.max(0,Math.min(10000,Math.round(Number(pushups)||0)));if(next!==checkin.value.pushups)checkin.update({pushups:next});};
   const toggleEvent=(id:string)=>checkin.update({calendar_done:checkin.value.calendar_done.includes(id)?checkin.value.calendar_done.filter(x=>x!==id):[...checkin.value.calendar_done,id]});
-  return <div className="daily-home">
+  return <div className="daily-home growth-board">
+    <SmallWin key={`win-${today}`} checkin={checkin}/>
+    <div className="growth-main">
     <section className="card daily-checklist">
       <div className="daily-heading"><h2>Daily checklist</h2><span>{completed} / 4 checked in</span></div>
       <div className="daily-progress" aria-label={`${completed} of 4 daily check-ins complete`}><span style={{width:`${completed*25}%`}}/></div>
@@ -54,6 +62,9 @@ export function TodayTab({data,userId,onAddWorkout,onRemoveWorkout}:TodayTabProp
       </div>
       <div className="daily-save" role="status">{checkin.error?<><span>{checkin.error}</span>{checkin.ready&&<button className="btn-subtle" onClick={checkin.retry}>Retry save</button>}</>:!checkin.ready?'Loading your day…':checkin.saving?'Saving…':'Saved to your account · a fresh checklist each day'}</div>
     </section>
+    <KnowledgeCard key={`knowledge-${today}`} tracker={tracker} checkin={checkin}/>
+    </div>
+    <AchievementTracker records={records} workouts={data.workouts} courseDays={tracker.settings.faith.completed.length} today={today} ready={history.ready&&checkin.ready&&tracker.ready} error={history.error}/>
     <section className="card daily-agenda">
       <div className="daily-heading"><h2>On your calendar</h2><div className="daily-calendar-actions">{calendar.connected?<><button className="btn-subtle" disabled={calendar.loading} onClick={calendar.refresh}>Refresh</button><button className="btn-subtle" onClick={calendar.disconnect}>Disconnect</button></>:<button className="btn-ghost" disabled={!calendar.ready||calendar.loading} onClick={calendar.connect}>Connect Google</button>}</div></div>
       {calendar.error&&<p role="alert">{calendar.error}</p>}
@@ -62,8 +73,9 @@ export function TodayTab({data,userId,onAddWorkout,onRemoveWorkout}:TodayTabProp
       {calendar.connected&&!calendar.loading&&!calendar.error&&events.length===0&&<p>No events on your calendar today.</p>}
       {events.map(event=><div className="daily-row calendar-check" key={event.id}><label><input type="checkbox" disabled={!checkin.ready} checked={checkin.value.calendar_done.includes(event.id)} onChange={()=>toggleEvent(event.id)}/><span>{event.summary}<small>{event.allDay?'All day':`${new Date(event.start).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} – ${new Date(event.end).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`}</small></span></label></div>)}
       {calendar.connected&&<small className="daily-meta">Checks are private to LifeOS; Google events stay unchanged.</small>}
+      <GoogleCalendarSetup clientId={tracker.settings.googleClientId??""} saving={!tracker.ready||tracker.saving} onSave={googleClientId=>tracker.save({...tracker.settings,googleClientId})}/>
     </section>
-    <details className="daily-tracker-details"><summary>Workout plan & church tracker <span>{tracker.settings.faith.completed.length} / 6 study days complete</span></summary>
+    <details className="daily-tracker-details"><summary>Workout plan & course settings <span>{tracker.settings.faith.completed.length} / 6 study days complete</span></summary>
       <MotivationTrackerView data={data} tracker={tracker} compact onAddWorkout={onAddWorkout} onRemoveWorkout={onRemoveWorkout}/>
     </details>
   </div>;

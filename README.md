@@ -69,7 +69,7 @@ For the deployment checklist and migration order, see [DEPLOYMENT.md](DEPLOYMENT
 
 ## Motivational home
 
-The home page is a daily checklist: prayer, a 100-push-up counter, manual steps, gym or recovery, and checkable events from a connected primary Google Calendar. Counts and checks are private, saved per local date in `daily_checkins`, and reset for each new day while history remains stored. Calendar checks do not modify Google events. Finance navigation is deferred. The existing workout plan and church study tracker remain under a collapsed section below the checklist. See [Google Calendar setup](DEPLOYMENT.md#motivational-home-and-google-calendar) to enable read-only event access.
+The home page is a daily checklist: prayer, a 100-push-up counter, manual steps, gym or recovery, and checkable events from a connected primary Google Calendar. Counts and checks are private, saved per local date in `daily_checkins`, and reset for each new day while history remains stored. Calendar checks do not modify Google events. Finance navigation is deferred. The knowledge tracker sits beside the compact checklist, with dated study notes, a daily 1% action, a 14-day activity strip, and milestones based on logged effort. Workout plans and course settings remain collapsed below. See [Google Calendar setup](DEPLOYMENT.md#motivational-home-and-google-calendar) to enable read-only event access.
 
 ## Cyber tab
 
